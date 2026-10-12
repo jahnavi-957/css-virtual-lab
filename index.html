@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playfair Cipher — Virtual Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F5EEDF;
+    --paper-alt: #EBE0C8;
+    --card: #FBF7EC;
+    --ink: #2A1F14;
+    --ink-soft: #5C4A36;
+    --ink-faint: #8A7860;
+    --brown: #7A4A24;
+    --brown-deep: #5A3618;
+    --copper: #B4712E;
+    --copper-soft: #E7C494;
+    --line: #D8C9A8;
+    --success: #4B6B3A;
+    --success-bg: #E4EBDA;
+    --error: #93412C;
+    --error-bg: #F2E0D6;
+    --shadow: 0 1px 0 rgba(42,31,20,0.06);
+  }
+  :root[data-theme="dark"]{
+    --paper: #1D1712;
+    --paper-alt: #241C15;
+    --card: #29201A;
+    --ink: #F1E7D6;
+    --ink-soft: #CBB89C;
+    --ink-faint: #8F7B62;
+    --brown: #D6A160;
+    --brown-deep: #E8BE86;
+    --copper: #E0A155;
+    --copper-soft: #4A3421;
+    --line: #4A3A29;
+    --success: #9CC17F;
+    --success-bg: #2C3524;
+    --error: #E39A7F;
+    --error-bg: #402620;
+    --shadow: 0 1px 0 rgba(0,0,0,0.3);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper: #1D1712;
+      --paper-alt: #241C15;
+      --card: #29201A;
+      --ink: #F1E7D6;
+      --ink-soft: #CBB89C;
+      --ink-faint: #8F7B62;
+      --brown: #D6A160;
+      --brown-deep: #E8BE86;
+      --copper: #E0A155;
+      --copper-soft: #4A3421;
+      --line: #4A3A29;
+      --success: #9CC17F;
+      --success-bg: #2C3524;
+      --error: #E39A7F;
+      --error-bg: #402620;
+      --shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Lora', serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  code, .mono{
+    font-family:'IBM Plex Mono', monospace;
+  }
+  a{color:var(--brown);}
+  ::selection{background:var(--copper-soft); color:var(--ink);}
+
+  /* Topbar */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:34px;height:34px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:2px;
+    padding:3px; border:1px solid var(--brown); border-radius:4px;
+    background:var(--card);
+  }
+  .brand-mark span{background:var(--copper-soft); border-radius:1px;}
+  .brand-mark span:nth-child(3n){background:var(--brown);}
+  .brand-text .k{font-size:11px; letter-spacing:.08em; color:var(--ink-faint); text-transform:uppercase;}
+  .brand-text .n{font-size:16px; font-family:'Fraunces',serif; font-weight:600;}
+  .theme-toggle{
+    border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+    border-radius:20px; padding:6px 14px; font-size:13px; cursor:pointer; font-family:'Lora',serif;
+  }
+  .theme-toggle:hover{border-color:var(--brown); color:var(--brown);}
+
+  /* Layout */
+  .layout{
+    display:grid;
+    grid-template-columns:220px minmax(0,1fr);
+    max-width:1180px;
+    margin:0 auto;
+    gap:0;
+  }
+  nav.index{
+    position:sticky; top:65px; align-self:start;
+    padding:40px 16px 40px 28px;
+    height:calc(100vh - 65px);
+    overflow-y:auto;
+  }
+  nav.index ol{list-style:none; margin:0; padding:0; counter-reset:idx;}
+  nav.index li{margin-bottom:2px;}
+  nav.index a{
+    counter-increment:idx;
+    display:flex; gap:10px; align-items:baseline;
+    text-decoration:none; color:var(--ink-soft);
+    font-size:14px; padding:7px 8px; border-radius:6px;
+    border-left:2px solid transparent;
+  }
+  nav.index a::before{
+    content: counter(idx, decimal-leading-zero);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; color:var(--ink-faint);
+  }
+  nav.index a:hover{color:var(--brown); background:var(--paper-alt);}
+  nav.index a.active{color:var(--brown-deep); border-left-color:var(--brown); background:var(--paper-alt); font-weight:600;}
+
+  main{padding:0 32px 100px 32px; min-width:0;}
+
+  /* Hero */
+  .hero{
+    padding:56px 0 40px 0;
+    border-bottom:1px solid var(--line);
+    margin-bottom:44px;
+    display:grid; grid-template-columns:1.3fr 1fr; gap:36px; align-items:center;
+  }
+  .hero h1{font-size:44px; margin:0 0 14px 0; line-height:1.05;}
+  .hero p.lede{font-size:17px; color:var(--ink-soft); max-width:46ch; margin:0 0 20px 0;}
+  .hero-tags{display:flex; gap:8px; flex-wrap:wrap;}
+  .tag{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.03em;
+    border:1px solid var(--line); color:var(--ink-soft); padding:4px 10px; border-radius:20px;
+  }
+  .hero-demo{
+    background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .hero-demo .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint); margin-bottom:10px;}
+  .hero-demo .pair-row{display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:20px; margin:6px 0;}
+  .hero-demo .arrow{color:var(--copper);}
+  .hero-demo .cipher-out{color:var(--brown-deep); font-weight:600; letter-spacing:.08em;}
+
+  section{padding-top:70px; margin-top:-70px; margin-bottom:70px;}
+  section:last-of-type{margin-bottom:20px;}
+  .eyebrow{font-size:12px; color:var(--copper); font-family:'IBM Plex Mono',monospace; margin-bottom:6px;}
+  section h2{font-size:28px; margin:0 0 18px 0;}
+  section > p.intro{color:var(--ink-soft); max-width:70ch; margin-bottom:24px;}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:22px 24px; box-shadow:var(--shadow);
+  }
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:760px){.grid-2{grid-template-columns:1fr;}}
+
+  ul.obj-list{margin:0; padding-left:20px;}
+  ul.obj-list li{margin-bottom:8px;}
+
+  .theory-block{margin-bottom:18px;}
+  .theory-block h3{font-size:17px; margin:0 0 8px 0; color:var(--brown-deep);}
+  .rule-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px;}
+  @media (max-width:760px){.rule-cards{grid-template-columns:1fr;}}
+  .rule-card{border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--paper-alt);}
+  .rule-card .rc-title{font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--brown); margin-bottom:6px;}
+  .mini-grid{display:grid; grid-template-columns:repeat(5,18px); gap:2px; margin-top:10px;}
+  .mini-grid div{width:18px;height:18px;border:1px solid var(--line); border-radius:2px;}
+  .mini-grid .hl{background:var(--copper-soft); border-color:var(--copper);}
+
+  /* Procedure */
+  ol.steps{counter-reset:step; list-style:none; margin:0; padding:0;}
+  ol.steps li{
+    counter-increment:step;
+    display:grid; grid-template-columns:38px 1fr; gap:14px;
+    padding:14px 0; border-bottom:1px solid var(--line);
+  }
+  ol.steps li:last-child{border-bottom:none;}
+  ol.steps li::before{
+    content: counter(step);
+    font-family:'Fraunces',serif; font-weight:600; font-size:16px;
+    color:var(--brown); border:1px solid var(--brown); border-radius:50%;
+    width:32px;height:32px; display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps h4{margin:0 0 4px 0; font-size:15px; font-family:'Lora',serif; font-weight:600;}
+  ol.steps p{margin:0; color:var(--ink-soft); font-size:14.5px;}
+
+  /* Simulation */
+  .sim-wrap{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  @media (max-width:900px){.sim-wrap{grid-template-columns:1fr;}}
+  label{display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:6px;}
+  input[type=text], textarea{
+    width:100%; font-family:'IBM Plex Mono',monospace; font-size:15px;
+    border:1px solid var(--line); border-radius:6px; padding:10px 12px;
+    background:var(--paper); color:var(--ink); resize:vertical;
+  }
+  input[type=text]:focus, textarea:focus, button:focus-visible, .mode-btn:focus-visible, nav.index a:focus-visible{
+    outline:2px solid var(--brown); outline-offset:2px;
+  }
+  .field{margin-bottom:16px;}
+  .mode-toggle{display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; width:fit-content; margin-bottom:16px;}
+  .mode-btn{
+    background:var(--card); border:none; padding:9px 18px; font-family:'Lora',serif; font-size:14px;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .mode-btn.active{background:var(--brown); color:var(--paper);}
+  .btn-row{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;}
+  button.primary{
+    background:var(--brown); color:var(--paper); border:none; border-radius:6px;
+    padding:10px 20px; font-family:'Lora',serif; font-size:14.5px; cursor:pointer; font-weight:600;
+  }
+  button.primary:hover{background:var(--brown-deep);}
+  button.ghost{
+    background:transparent; border:1px solid var(--line); color:var(--ink-soft); border-radius:6px;
+    padding:10px 16px; font-family:'Lora',serif; font-size:14px; cursor:pointer;
+  }
+  button.ghost:hover{border-color:var(--brown); color:var(--brown);}
+  .error-msg{color:var(--error); font-size:13.5px; margin-top:8px; min-height:1em;}
+
+  .matrix-panel{text-align:center;}
+  .matrix-title{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:12px;}
+  .matrix{
+    display:inline-grid; grid-template-columns:repeat(5,56px); grid-template-rows:repeat(5,56px);
+    gap:4px; padding:10px; background:var(--paper-alt); border:1px solid var(--line); border-radius:8px;
+  }
+  .cell{
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600;
+    background:var(--card); border:1px solid var(--line); border-radius:5px; color:var(--ink);
+    transition:background .15s ease, border-color .15s ease, transform .15s ease;
+  }
+  .cell.in-a{background:#D8C0A0; border-color:var(--brown); color:var(--ink);}
+  .cell.in-b{background:#D8C0A0; border-color:var(--brown); color:var(--ink);}
+  .cell.out-a{background:var(--copper); border-color:var(--brown-deep); color:#2A1F14; transform:scale(1.04);}
+  .cell.out-b{background:var(--copper); border-color:var(--brown-deep); color:#2A1F14; transform:scale(1.04);}
+  .cell.line-row, .cell.line-col{background:var(--copper-soft);}
+  :root[data-theme="dark"] .cell.out-a, :root[data-theme="dark"] .cell.out-b{color:#241C15;}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cell.out-a, :root:not([data-theme="light"]) .cell.out-b{color:#241C15;} }
+
+  .legend{display:flex; gap:16px; justify-content:center; margin-top:12px; flex-wrap:wrap;}
+  .legend span{font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;}
+  .legend i{width:12px;height:12px;border-radius:3px; display:inline-block; border:1px solid var(--line);}
+  .legend .li-in{background:#D8C0A0;}
+  .legend .li-out{background:var(--copper);}
+
+  .result-box{margin-top:18px; padding:14px 16px; background:var(--paper-alt); border:1px solid var(--line); border-radius:8px;}
+  .result-box .r-label{font-size:12px; text-transform:uppercase; color:var(--ink-faint); letter-spacing:.06em; margin-bottom:6px;}
+  .result-text{font-family:'IBM Plex Mono',monospace; font-size:18px; letter-spacing:.06em; word-break:break-all; color:var(--brown-deep);}
+
+  table.steps-table{width:100%; border-collapse:collapse; margin-top:16px; font-size:13.5px;}
+  table.steps-table th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--ink-faint); border-bottom:1px solid var(--line); padding:8px 8px;
+  }
+  table.steps-table td{padding:8px; border-bottom:1px solid var(--line); font-family:'IBM Plex Mono',monospace;}
+  table.steps-table tr{cursor:pointer;}
+  table.steps-table tr:hover td{background:var(--paper-alt);}
+  table.steps-table tr.selected td{background:var(--copper-soft);}
+  .rule-pill{
+    display:inline-block; font-family:'Lora',serif; font-size:12px; padding:2px 9px; border-radius:20px;
+    border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .rule-pill.row{border-color:#7A8F5C; color:#4B6B3A;}
+  .rule-pill.col{border-color:#6E8FA8; color:#3E6580;}
+  .rule-pill.rect{border-color:var(--copper); color:var(--brown-deep);}
+  :root[data-theme="dark"] .rule-pill.row{color:#9CC17F;}
+  :root[data-theme="dark"] .rule-pill.col{color:#94C1DE;}
+
+  .note{font-size:13px; color:var(--ink-faint); margin-top:14px;}
+  .example-link{background:none; border:none; color:var(--brown); text-decoration:underline; cursor:pointer; font-size:13px; padding:0; font-family:'Lora',serif;}
+
+  /* Quiz */
+  .quiz-card{margin-bottom:16px;}
+  .quiz-card .q-title{font-weight:600; margin-bottom:12px; font-size:15.5px;}
+  .quiz-card .opt{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line);
+    border-radius:6px; margin-bottom:8px; cursor:pointer; font-size:14.5px;
+  }
+  .quiz-card .opt:hover{border-color:var(--brown);}
+  .quiz-card .opt input{accent-color:var(--brown);}
+  .quiz-card .opt.correct{background:var(--success-bg); border-color:var(--success);}
+  .quiz-card .opt.incorrect{background:var(--error-bg); border-color:var(--error);}
+  .quiz-explain{font-size:13.5px; color:var(--ink-soft); margin-top:8px; display:none; padding-left:2px;}
+  .quiz-explain.show{display:block;}
+  .quiz-score{
+    margin-top:10px; padding:14px 16px; border-radius:8px; background:var(--paper-alt);
+    border:1px solid var(--line); font-family:'IBM Plex Mono',monospace; font-size:14.5px; display:none;
+  }
+  .quiz-score.show{display:block;}
+
+  /* References */
+  ol.refs{padding-left:20px; margin:0;}
+  ol.refs li{margin-bottom:10px; color:var(--ink-soft); font-size:14.5px;}
+  ol.refs a{color:var(--brown);}
+
+  footer{text-align:center; padding:30px 0; color:var(--ink-faint); font-size:12.5px; border-top:1px solid var(--line);}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    nav.index{
+      position:sticky; top:65px; height:auto; padding:12px 20px;
+      background:var(--paper); border-bottom:1px solid var(--line); z-index:30;
+      overflow-x:auto; overflow-y:hidden;
+    }
+    nav.index ol{display:flex; gap:4px;}
+    nav.index a::before{display:none;}
+    nav.index a{white-space:nowrap;}
+    .hero{grid-template-columns:1fr;}
+    main{padding:0 18px 80px 18px;}
+    .matrix{grid-template-columns:repeat(5,46px); grid-template-rows:repeat(5,46px);}
+    .cell{font-size:16px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .cell{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="brand-text">
+      <div class="k">Virtual Lab</div>
+      <div class="n">Playfair Cipher</div>
+    </div>
+  </div>
+  <button class="theme-toggle" id="themeToggle" type="button">Dark mode</button>
+</div>
+
+<div class="layout">
+  <nav class="index">
+    <ol>
+      <li><a href="#aim">Aim &amp; objectives</a></li>
+      <li><a href="#theory">Theory</a></li>
+      <li><a href="#procedure">Procedure</a></li>
+      <li><a href="#simulation">Simulation</a></li>
+      <li><a href="#quiz">Assessment</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>The Playfair Cipher</h1>
+        <p class="lede">A hands-on laboratory for the classical digraph substitution cipher — build a key square from any keyword, then encrypt and decrypt your own messages letter-pair by letter-pair.</p>
+        <div class="hero-tags">
+          <span class="tag">5×5 KEY SQUARE</span>
+          <span class="tag">DIGRAPH SUBSTITUTION</span>
+          <span class="tag">1854 · WHEATSTONE</span>
+        </div>
+      </div>
+      <div class="hero-demo">
+        <div class="label">Worked example, key: MONARCHY</div>
+        <div class="pair-row"><span>IN</span><span class="arrow">→</span><span class="cipher-out">GA</span></div>
+        <div class="pair-row"><span>ST</span><span class="arrow">→</span><span class="cipher-out">YB</span></div>
+        <div class="pair-row"><span>RU</span><span class="arrow">→</span><span class="cipher-out">CM</span></div>
+        <div class="pair-row"><span>ME</span><span class="arrow">→</span><span class="cipher-out">NT</span></div>
+      </div>
+    </div>
+
+    <!-- AIM -->
+    <section id="aim">
+      <div class="eyebrow">01</div>
+      <h2>Aim &amp; objectives</h2>
+      <div class="card">
+        <p style="margin-top:0;">To understand and implement the Playfair cipher, a manual symmetric encryption technique that encrypts pairs of letters (digraphs) instead of single letters, and to observe how a keyword-derived key square governs both encryption and decryption.</p>
+        <ul class="obj-list">
+          <li>Construct a 5×5 key square from a user-supplied keyword, correctly merging I and J.</li>
+          <li>Split a plaintext message into digraphs, handling repeated letters and odd-length messages.</li>
+          <li>Apply the three substitution rules — same row, same column, and rectangle — to encrypt a message.</li>
+          <li>Reverse the same rules to decrypt a ciphertext back to plaintext.</li>
+          <li>Evaluate why digraph substitution resists simple frequency analysis better than a monoalphabetic cipher, and where it remains weak.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- THEORY -->
+    <section id="theory">
+      <div class="eyebrow">02</div>
+      <h2>Theoretical concepts</h2>
+      <p class="intro">The Playfair cipher was invented by Charles Wheatstone in 1854 but is named after Lord Playfair, who championed its use by the British Foreign Office. It was one of the first ciphers to encrypt pairs of letters rather than single characters, which was enough to defeat the simple frequency-counting attacks that broke earlier substitution ciphers.</p>
+
+      <div class="theory-block">
+        <h3>The key square</h3>
+        <p>A keyword is written out with duplicate letters removed, then the remaining letters of the alphabet are appended in order, filling a 5×5 grid of 25 cells. Since the Latin alphabet has 26 letters, <strong>I and J share a single cell</strong> — any J in the keyword or message is treated as I.</p>
+      </div>
+
+      <div class="theory-block">
+        <h3>Preparing the message</h3>
+        <p>The plaintext is split into digraphs (letter pairs):</p>
+        <ul class="obj-list">
+          <li>If both letters of a pair are the same, an <strong>X</strong> is inserted between them and the second letter is carried forward to start the next pair.</li>
+          <li>If the message has an odd number of letters, a trailing <strong>X</strong> is appended to complete the final pair.</li>
+        </ul>
+      </div>
+
+      <div class="theory-block">
+        <h3>Substitution rules</h3>
+        <p>Each pair of letters is located in the key square, and one of three rules is applied:</p>
+        <div class="rule-cards">
+          <div class="rule-card">
+            <div class="rc-title">Same row</div>
+            <p style="margin:0;font-size:13.5px;color:var(--ink-soft);">Replace each letter with the one immediately to its right, wrapping to the start of the row if needed.</p>
+          </div>
+          <div class="rule-card">
+            <div class="rc-title">Same column</div>
+            <p style="margin:0;font-size:13.5px;color:var(--ink-soft);">Replace each letter with the one immediately below it, wrapping to the top of the column if needed.</p>
+          </div>
+          <div class="rule-card">
+            <div class="rc-title">Rectangle</div>
+            <p style="margin:0;font-size:13.5px;color:var(--ink-soft);">The two letters form the corners of a rectangle. Replace each with the letter in its own row but the other letter's column.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="theory-block">
+        <h3>Decryption</h3>
+        <p>Decryption uses the identical key square with the row and column shifts reversed — left instead of right, up instead of down — while the rectangle rule stays the same, since swapping columns is its own inverse.</p>
+      </div>
+    </section>
+
+    <!-- PROCEDURE -->
+    <section id="procedure">
+      <div class="eyebrow">03</div>
+      <h2>Step-by-step procedure</h2>
+      <p class="intro">Follow these steps manually before checking your work in the simulation below.</p>
+      <div class="card">
+        <ol class="steps">
+          <li>
+            <div>
+              <h4>Choose a keyword</h4>
+              <p>Pick any word or phrase. Remove spaces and repeated letters, and treat J as I.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h4>Build the key square</h4>
+              <p>Write the unique keyword letters into a 5×5 grid, then fill the remaining cells with the unused letters of the alphabet in order (A–Z, skipping J).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h4>Prepare the message</h4>
+              <p>Remove spaces and punctuation, convert J to I, then split the text into digraphs — inserting X between repeated letters and padding a final lone letter with X.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h4>Locate each pair in the square</h4>
+              <p>For every digraph, find the row and column of both letters in the key square.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h4>Apply the matching rule</h4>
+              <p>Use the row, column, or rectangle rule to substitute each letter, producing the ciphertext (or plaintext, when decrypting) digraph.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h4>Assemble the result</h4>
+              <p>Concatenate all output digraphs in order to get the final encrypted or decrypted text.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SIMULATION -->
+    <section id="simulation">
+      <div class="eyebrow">04</div>
+      <h2>Interactive simulation</h2>
+      <p class="intro">Enter a keyword and a message, choose a mode, and run the cipher. Click any row in the digraph table to see exactly which cells of the key square were used.</p>
+
+      <div class="sim-wrap">
+        <div class="card">
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="modeEncrypt" type="button">Encrypt</button>
+            <button class="mode-btn" id="modeDecrypt" type="button">Decrypt</button>
+          </div>
+
+          <div class="field">
+            <label for="keyInput">Key</label>
+            <input type="text" id="keyInput" value="MONARCHY" autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="field">
+            <label id="msgLabel" for="msgInput">Plaintext message</label>
+            <textarea id="msgInput" rows="3" spellcheck="false">Instruments</textarea>
+          </div>
+
+          <div class="btn-row">
+            <button class="primary" id="runBtn" type="button">Run cipher</button>
+            <button class="ghost" id="clearBtn" type="button">Clear</button>
+            <button class="example-link" id="exampleBtn" type="button">Load another example</button>
+          </div>
+          <div class="error-msg" id="errorMsg"></div>
+
+          <div class="result-box" id="resultBox" style="display:none;">
+            <div class="r-label" id="resultLabel">Ciphertext</div>
+            <div class="result-text" id="resultText"></div>
+          </div>
+
+          <table class="steps-table" id="stepsTable" style="display:none;">
+            <thead>
+              <tr><th>#</th><th>Pair</th><th>Rule</th><th>Result</th></tr>
+            </thead>
+            <tbody id="stepsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card matrix-panel">
+          <div class="matrix-title">Key square</div>
+          <div class="matrix" id="matrixGrid"></div>
+          <div class="legend">
+            <span><i class="li-in"></i> input letters</span>
+            <span><i class="li-out"></i> output letters</span>
+          </div>
+          <p class="note" id="matrixNote">I and J share one cell.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="quiz">
+      <div class="eyebrow">05</div>
+      <h2>Assessment</h2>
+      <p class="intro">Check your understanding of the Playfair cipher before moving on.</p>
+      <div id="quizContainer"></div>
+      <div class="btn-row">
+        <button class="primary" id="checkQuizBtn" type="button">Check answers</button>
+        <button class="ghost" id="newQuizBtn" type="button">New quiz</button>
+      </div>
+      <div class="quiz-score" id="quizScore"></div>
+    </section>
+
+    <!-- REFERENCES -->
+    <section id="references">
+      <div class="eyebrow">06</div>
+      <h2>References</h2>
+      <div class="card">
+        <ol class="refs">
+          <li>Stallings, W. <em>Cryptography and Network Security: Principles and Practice.</em> Pearson Education. Chapter on classical encryption techniques covers the Playfair cipher's construction and cryptanalysis.</li>
+          <li>Kahn, D. <em>The Codebreakers: The Story of Secret Writing.</em> Scribner. Historical account of Charles Wheatstone's invention and Lord Playfair's advocacy of the cipher.</li>
+          <li>Forouzan, B. A. <em>Cryptography and Network Security.</em> McGraw-Hill. Discusses digraph substitution ciphers and their resistance to single-letter frequency analysis.</li>
+          <li>GeeksforGeeks. "Playfair Cipher with Examples" — algorithmic walkthrough of key square generation and digraph encryption rules.</li>
+          <li>Wikipedia contributors. "Playfair cipher." <em>Wikipedia, The Free Encyclopedia.</em></li>
+        </ol>
+      </div>
+    </section>
+
+    <footer>Playfair Cipher Virtual Lab · for educational use</footer>
+  </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
