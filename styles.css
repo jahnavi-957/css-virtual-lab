@@ -1,0 +1,6 @@
+@import url("./src/styles.css");
+
+/* The static document already says Quiz, so do not replace its heading. */
+#quiz h2{font-size:28px;}
+#quiz h2::after{content:none;}
+@media (max-width:600px){#quiz h2{font-size:24px;}}

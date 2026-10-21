@@ -1,23 +1,19 @@
 # Playfair Cipher Virtual Lab
 
-A React and Vite learning app for exploring the Playfair digraph cipher. It includes a key square, encryption and decryption simulation, step-by-step pair transformations, a randomized Q section, and a responsive blue-and-white interface.
+A standalone Playfair Cipher learning lab built with plain HTML, CSS, and JavaScript. It has no React or build step.
 
-## Run locally
+## Run it
 
-```sh
-npm install
-npm run dev
+Open `index.html` directly in a browser, or serve this folder with any static-file server:
+
+```powershell
+python -m http.server 8000
 ```
 
-Open the local URL printed by Vite. To create a production build, run:
+Then open `http://localhost:8000`.
 
-```sh
-npm run build
-```
+## Files
 
-## Project structure
-
-- `index.html` is the Vite document shell.
-- `src/main.jsx` mounts the React app.
-- `src/App.jsx` contains the interface, cipher logic, and interactive state.
-- `src/styles.css` contains the page styles and responsive layout.
+- `index.html` — page structure
+- `styles.css` — visual theme and responsive layout
+- `script.js` — cipher logic, key-square visualisation, theme toggle, and quiz
