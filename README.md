@@ -1,6 +1,6 @@
 # Playfair Cipher Virtual Lab
 
-A React and Vite learning app for exploring the Playfair digraph cipher. It includes a key square, encryption and decryption simulation, step-by-step pair transformations, a randomized Q section, and a responsive blue-and-white interface.
+A learning app for exploring the Playfair digraph cipher. It includes a key square, encryption and decryption simulation, step-by-step pair transformations, a randomized Q section, and a responsive blue-and-white interface.
 
 ## Run locally
 
