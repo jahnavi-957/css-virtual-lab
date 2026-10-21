@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 const alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ';
+const cleanLetters = (text) => (text.toUpperCase().replace(/J/g, 'I').match(/[A-Z]/g) || []);
 const sections = [
   ['aim', 'Aim'], ['objectives', 'Objectives'], ['theory', 'Theory'],
-  ['procedure', 'Procedure'], ['simulation', 'Simulation'], ['quiz', 'Q'], ['references', 'References'],
+  ['procedure', 'Procedure'], ['simulation', 'Simulation'], ['quiz', 'Quiz'], ['references', 'References'],
 ];
 
 function buildMatrix(key) {
@@ -12,7 +13,7 @@ function buildMatrix(key) {
   return Array.from({ length: 5 }, (_, row) => letters.slice(row * 5, row * 5 + 5));
 }
 function prepareEncrypt(text) {
-  const letters = (text.toUpperCase().replace(/J/g, 'I').match(/[A-Z]/g) || []);
+  const letters = cleanLetters(text);
   const pairs = [];
   for (let i = 0; i < letters.length;) {
     const a = letters[i], b = letters[i + 1];
@@ -23,8 +24,7 @@ function prepareEncrypt(text) {
   return pairs;
 }
 function prepareDecrypt(text) {
-  const letters = (text.toUpperCase().replace(/J/g, 'I').match(/[A-Z]/g) || []);
-  if (letters.length % 2) letters.push('X');
+  const letters = cleanLetters(text);
   const pairs = [];
   for (let i = 0; i < letters.length; i += 2) pairs.push([letters[i], letters[i + 1]]);
   return pairs;
@@ -89,9 +89,17 @@ function App() {
     setError('');
     if (!/[a-z]/i.test(key)) { setError('Enter a key containing at least one letter.'); setResult(null); return; }
     if (!/[a-z]/i.test(message)) { setError('Enter a message containing at least one letter.'); setResult(null); return; }
+    if (mode === 'decrypt' && cleanLetters(message).length % 2 !== 0) {
+      setError('Ciphertext must contain complete letter pairs. Add or remove one letter, then try again.');
+      setResult(null);
+      return;
+    }
     const pairs = mode === 'encrypt' ? prepareEncrypt(message) : prepareDecrypt(message);
     const rows = pairs.map((pair) => transform(grid, pair, mode));
-    setResult({ pairs, rows, output: rows.map(([a, b]) => a + b).join('') });
+    const transformed = rows.map(([a, b]) => a + b).join('');
+    // A trailing X is the padding added for an odd-length plaintext.
+    const output = mode === 'decrypt' && transformed.endsWith('X') ? transformed.slice(0, -1) : transformed;
+    setResult({ pairs, rows, output });
     setHighlight(0);
   }
   function loadExample() {
